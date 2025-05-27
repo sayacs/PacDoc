@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Packaging Printing Document Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-6">
+  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div>
+      <h1 class="text-2xl font-bold mb-6">Packaging Printing Document Generator</h1>
+      <label class="block mb-2">File Name</label>
+      <input type="text" id="fileName" class="w-full p-2 mb-4 bg-gray-800 border border-gray-700 rounded" />
+
+      <label class="block mb-2">File Type</label>
+      <select id="fileType" class="w-full p-2 mb-6 bg-gray-800 border border-gray-700 rounded">
+        <option value="">Select Type</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+        <option value="K">K</option>
+      </select>
+
+      <div id="optionsContainer"></div>
+
+      <button onclick="generatePreview()" class="mt-6 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Preview</button>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-semibold mb-4">Generated Output</h2>
+      <textarea id="previewText" class="w-full p-2 bg-gray-800 border border-gray-700 rounded h-80 mb-2" readonly></textarea>
+      <button onclick="copyText()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Copy</button>
+    </div>
+  </div>
+
+  <script>
+    const config = {
+      A: ['dimensionInline', 'colorMono', 'materialA'],
+      B: ['dimensionInline', 'colorB', 'materialB', 'finishing', 'uv', 'sealer'],
+      C: ['dimensionOptionalL', 'colorC', 'materialC', 'finishing'],
+      D: ['dimensionWH', 'colorD', 'materialD','finishingD'],
+      K: ['materialK']
+    };
+
+    const labels = {
+      File: '文件', Dimension: '尺寸', Color: '颜色', Material: '材质',
+      Finishing: '处理', UV: 'UV', Sealer: '封口贴'
+    };
+
+    const translations = {
+      'Monochrome': '单色',
+      'CMYK': '四色',
+      'CMYK + Pantone': '四色加潘通色（Pantone 2587 C（紫）+ Pantone 368 C（绿））',
+      'Product image with UV': '产品图UV处理',
+      'Matte Lamination': '哑膜', 'Other': '其他', 'None': '无',
+      'Woodfree Label': '道林标签纸', 'Mirrokote Label': '铜版标签纸',
+      'Art Card 350gsm': '白卡纸 350克', 
+      'F-flute': 'F型瓦楞纸',
+      'E-flute': 'E型瓦楞纸', 
+      'Pulp Tray': '纸浆托盘', 
+      'Blister': '吸塑',
+      'Art Paper 128gsm': '铜版纸 128克',
+      'Art Paper 157gsm': '铜版纸 157克', 
+      'Book Paper 80gsm': '书写纸 80克',
+      'Saddle Stitch': '骑马钉', 
+      'Glue Binding': '胶装', 
+      'Folded': '折页',
+      '30mm x 3pcs': '30毫米 x 3片', 
+      '30mm x 4pcs': '30毫米 x 4片',
+      '30mm x 5pcs': '30毫米 x 5片', 
+      '30mm x 6pcs': '30毫米 x 6片',
+    };
+
+    document.getElementById('fileType').addEventListener('change', function () {
+      const type = this.value;
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = '';
+      if (!config[type]) return;
+
+      config[type].forEach(field => {
+        if (field === 'dimensionInline') container.appendChild(dimensionInline());
+        if (field === 'dimensionOptionalL') container.appendChild(dimensionOptionalL());
+        if (field === 'dimensionWH') container.appendChild(dimensionWH());
+        if (field === 'colorMono') container.appendChild(selectField('Color', 'color', ['Monochrome']));
+        if (field === 'colorB') container.appendChild(selectField('Color', 'color', ['CMYK', 'CMYK + Pantone', 'Monochrome', 'N/A']));
+        if (field === 'colorC') container.appendChild(selectField('Color', 'color', ['None', 'CMYK', 'CMYK + Pantone', 'Monochrome']));
+        if (field === 'colorD') container.appendChild(selectField('Color', 'color', ['None', 'CMYK', 'Monochrome']));
+        if (field === 'materialA') container.appendChild(selectField('Material', 'material', ['None', 'H737H', 'D525D', 'K=K', 'K3K']));
+        if (field === 'materialB') container.appendChild(selectWithOther('Material', 'material', ['None', 'Art Card 400gsm', 'Art Card 350gsm', 'Art Card 350gsm + F-flute', 'Other']));
+        if (field === 'materialC') container.appendChild(selectWithOther('Material', 'material', ['None', 'Art Card 400gsm', 'Art Card 350gsm', 'F-flute', 'E-flute', 'Pulp Tray', 'Blister', 'EVA', 'PE', 'Other']));
+        if (field === 'materialD') container.appendChild(selectWithOther('Material', 'material', ['None', 'Art Paper 128gsm', 'Art Paper 157gsm', 'Book Paper 80gsm', 'Other']));
+        if (field === 'materialK') container.appendChild(selectWithOther('Material', 'material', ['None', 'Woodfree Label', 'Mirrokote Label', 'Other']));
+        if (field === 'finishing') container.appendChild(selectField('Finishing', 'finishing', ['None', 'Matte Lamination']));
+        if (field === 'uv') container.appendChild(selectField('Product Image with UV', 'uv', ['No', 'Yes']));
+        if (field === 'sealer') container.appendChild(selectField('Sealer', 'sealer', ['3pcs', '4pcs', '5pcs', '6pcs']));
+        if (field === 'finishingD') container.appendChild(selectField('Finishing', 'finishing', ['Saddle Stitch', 'Glue Binding', 'Folded']));
+      });
+    });
+
+    function dimensionInline() {
+      return html(`
+        <label class='block mb-2'>Dimension (L x W x H)</label>
+        <div class='flex gap-2'>
+          <input id='dimL' placeholder='L' class='flex-1 p-2 bg-gray-800 border border-gray-700 rounded'/>
+          <input id='dimW' placeholder='W' class='flex-1 p-2 bg-gray-800 border border-gray-700 rounded'/>
+          <input id='dimH' placeholder='H' class='flex-1 p-2 bg-gray-800 border border-gray-700 rounded'/>
+        </div>`);
+    }
+    function dimensionOptionalL() {
+      return dimensionInline();
+    }
+    function dimensionWH() {
+      return html(`
+        <label class='block mb-2'>Dimension (W x H)</label>
+        <div class='flex gap-2'>
+          <input id='dimW' placeholder='W' class='flex-1 p-2 bg-gray-800 border border-gray-700 rounded'/>
+          <input id='dimH' placeholder='H' class='flex-1 p-2 bg-gray-800 border border-gray-700 rounded'/>
+        </div>`);
+    }
+    function selectField(label, id, options) {
+      const opts = [`<option value="">Select ${label}</option>`].concat(options.map(o => `<option>${o}</option>`));
+      return html(`<label class='block mb-2'>${label}</label><select id='${id}' class='w-full p-2 bg-gray-800 border border-gray-700 rounded'>${opts.join('')}</select>`);
+    }
+    function selectWithOther(label, id, options) {
+      const wrapper = html(`<div class='mb-4'><label class='block mb-2'>${label}</label></div>`);
+      const select = document.createElement('select');
+      select.id = id;
+      select.className = 'w-full p-2 bg-gray-800 border border-gray-700 rounded';
+      select.innerHTML = `<option value="">Select ${label}</option>` + options.map(o => `<option>${o}</option>`).join('');
+      wrapper.appendChild(select);
+      const input = document.createElement('input');
+      input.placeholder = 'Please specify';
+      input.id = id + 'Other';
+      input.className = 'w-full p-2 mt-2 hidden bg-gray-800 border border-gray-700 rounded';
+      select.addEventListener('change', () => {
+        input.classList.toggle('hidden', select.value !== 'Other');
+      });
+      wrapper.appendChild(input);
+      return wrapper;
+    }
+    function html(inner) {
+      const div = document.createElement('div');
+      div.className = 'mb-4';
+      div.innerHTML = inner;
+      return div;
+    }
+
+    function translate(label, value) {
+      return `${labels[label] || label}：${translations[value] || value}`;
+    }
+
+    function generatePreview() {
+      const name = document.getElementById("fileName").value.trim();
+      if (!name) return;
+      let en = `File: ${name}`;
+      let cn = `文件：${name}`;
+
+      const l = document.getElementById("dimL")?.value.trim();
+      const w = document.getElementById("dimW")?.value.trim();
+      const h = document.getElementById("dimH")?.value.trim();
+      if (w && h) {
+        const dim = l ? `${l} x ${w} x ${h} mm` : `${w} x ${h} mm`;
+        en += `\nDimension: ${dim}`;
+        cn += `\n尺寸：${dim}`;
+      }
+
+      const color = document.getElementById("color")?.value;
+      if (color && color !== 'None' && color !== 'N/A') {
+        const value = color === 'CMYK + Pantone' ? 'CMYK + Pantone 2587 C (Purple) + Pantone 368 C (Green)' : color;
+        en += `\nColor: ${value}`;
+        cn += `\n${translate('Color', color)}`;
+      }
+
+      const material = getOptionValue('material');
+      if (material && material !== 'None') {
+        en += `\nMaterial: ${material}`;
+        cn += `\n${translate('Material', material)}`;
+      }
+
+      const finishing = document.getElementById("finishing")?.value;
+      if (finishing && finishing !== 'None') {
+        en += `\nFinishing: ${finishing}`;
+        cn += `\n${translate('Finishing', finishing)}`;
+      }
+
+      const uv = document.getElementById("uv")?.value;
+      if (uv === 'Yes') {
+        en += `\nUV: Product image with UV`;
+        cn += `\n${translate('UV', 'Product image with UV')}`;
+      }
+
+      const sealer = document.getElementById("sealer")?.value;
+      if (sealer) {
+        en += `\nSealer: 30mm x ${sealer}`;
+        cn += `\n封口贴：30mm x ${sealer}`;
+      }
+
+      document.getElementById("previewText").value = en + "\n\n" + cn;
+    }
+
+    function getOptionValue(id) {
+      const sel = document.getElementById(id);
+      if (!sel) return '';
+      if (sel.value === 'Other') {
+        const o = document.getElementById(id + 'Other')?.value.trim();
+        return o ? `Other: ${o}` : 'Other';
+      }
+      return sel.value;
+    }
+
+    function copyText() {
+      const el = document.getElementById("previewText");
+      el.select();
+      document.execCommand("copy");
+    }
+  </script>
+</body>
+</html>
