@@ -24,6 +24,8 @@
       </select>
 
       <div id="optionsContainer"></div>
+      <label class="block mb-2">Remark</label>
+      <input type="text" id="remark" class="w-full p-2 mb-4 bg-gray-800 border border-gray-700 rounded" />
 
       <button onclick="generatePreview()" class="mt-6 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Preview</button>
     </div>
@@ -198,6 +200,13 @@
         cn += `\n封口贴：30mm x ${sealer}`;
       }
 
+      const remark = document.getElementById("remark")?.value.trim();
+      if (remark) {
+        en += `\nRemark: ${remark}`;
+        cn += `\n备注：${remark}`;
+      }
+
+      
       document.getElementById("previewText").value = en + "\n\n" + cn;
     }
 
