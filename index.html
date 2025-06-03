@@ -71,6 +71,7 @@
       '30mm x 4pcs': '30毫米 x 4片',
       '30mm x 5pcs': '30毫米 x 5片', 
       '30mm x 6pcs': '30毫米 x 6片',
+      '1200gsm greyboard wrapped with 157gsm art paper': '1200克灰板，裱157克銅版紙',
     };
 
     document.getElementById('fileType').addEventListener('change', function () {
@@ -89,7 +90,7 @@
         if (field === 'colorD') container.appendChild(selectField('Color', 'color', ['None', 'CMYK', 'Monochrome']));
         if (field === 'materialA') container.appendChild(selectField('Material', 'material', ['None', 'H737H', 'D525D', 'K=K', 'K3K']));
         if (field === 'materialB') container.appendChild(selectWithOther('Material', 'material', ['None', 'Art Card 400gsm', 'Art Card 350gsm', 'Art Card 350gsm + F-flute', 'Other']));
-        if (field === 'materialC') container.appendChild(selectWithOther('Material', 'material', ['None', 'Art Card 400gsm', 'Art Card 350gsm', 'F-flute', 'E-flute', 'Pulp Tray', 'Blister', 'EVA', 'PE', 'Other']));
+        if (field === 'materialC') container.appendChild(selectWithOther('Material', 'material', ['None', 'Art Card 400gsm', 'Art Card 350gsm', 'F-flute', 'E-flute', 'Pulp Tray', '1200gsm greyboard wrapped with 157gsm art paper', 'Blister', 'EVA', 'PE', 'Other']));
         if (field === 'materialD') container.appendChild(selectWithOther('Material', 'material', ['None', 'Art Paper 128gsm', 'Art Paper 157gsm', 'Book Paper 80gsm', 'Other']));
         if (field === 'materialK') container.appendChild(selectWithOther('Material', 'material', ['None', 'Woodfree Label', 'Mirrokote Label', 'Other']));
         if (field === 'finishing') container.appendChild(selectField('Finishing', 'finishing', ['None', 'Matte Lamination']));
